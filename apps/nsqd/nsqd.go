@@ -185,7 +185,7 @@ type program struct {
 }
 
 func main() {
-	prg := &program{}
+	prg := &program{} //没懂
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {
 		log.Fatal(err)
 	}
@@ -207,7 +207,7 @@ func (p *program) Start() error {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	if flagSet.Lookup("version").Value.(flag.Getter).Get().(bool) {
+	if flagSet.Lookup("version").Value.(flag.Getter).Get().(bool) { //这是什么鬼语法...
 		fmt.Println(version.String("nsqd"))
 		os.Exit(0)
 	}
@@ -222,14 +222,14 @@ func (p *program) Start() error {
 	}
 	cfg.Validate()
 
-	options.Resolve(opts, flagSet, cfg)
+	options.Resolve(opts, flagSet, cfg) //解析所有配置
 	nsqd := nsqd.New(opts)
 
 	err := nsqd.LoadMetadata()
 	if err != nil {
 		log.Fatalf("ERROR: %s", err.Error())
 	}
-	err = nsqd.PersistMetadata()
+	err = nsqd.PersistMetadata() //持久化 metadata
 	if err != nil {
 		log.Fatalf("ERROR: failed to persist metadata - %s", err.Error())
 	}
