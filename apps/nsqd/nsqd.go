@@ -185,7 +185,7 @@ type program struct {
 }
 
 func main() {
-	prg := &program{} //没懂
+	prg := &program{} //引用 program 结构体
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {
 		log.Fatal(err)
 	}
