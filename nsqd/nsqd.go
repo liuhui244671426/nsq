@@ -216,21 +216,22 @@ func (n *NSQD) Main() {
 	var httpListener net.Listener
 	var httpsListener net.Listener
 
-	ctx := &context{n}
+	ctx := &context{n} //获取 nsqd 的上下文
 
-	tcpListener, err := net.Listen("tcp", n.getOpts().TCPAddress)
+	tcpListener, err := net.Listen("tcp", n.getOpts().TCPAddress) //监听 tcp 端口
 	if err != nil {
 		n.logf(LOG_FATAL, "listen (%s) failed - %s", n.getOpts().TCPAddress, err)
 		os.Exit(1)
 	}
-	n.Lock()
+	n.Lock() //rw lock
 	n.tcpListener = tcpListener
-	n.Unlock()
+	n.Unlock() //rw unlock
 	tcpServer := &tcpServer{ctx: ctx}
+	//开启 tcp 服务
 	n.waitGroup.Wrap(func() {
 		protocol.TCPServer(n.tcpListener, tcpServer, n.logf)
 	})
-
+	//开启 tls http 服务
 	if n.tlsConfig != nil && n.getOpts().HTTPSAddress != "" {
 		httpsListener, err = tls.Listen("tcp", n.getOpts().HTTPSAddress, n.tlsConfig)
 		if err != nil {
@@ -245,6 +246,7 @@ func (n *NSQD) Main() {
 			http_api.Serve(n.httpsListener, httpsServer, "HTTPS", n.logf)
 		})
 	}
+	//监听 http 服务
 	httpListener, err = net.Listen("tcp", n.getOpts().HTTPAddress)
 	if err != nil {
 		n.logf(LOG_FATAL, "listen (%s) failed - %s", n.getOpts().HTTPAddress, err)
