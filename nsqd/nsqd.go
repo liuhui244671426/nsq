@@ -47,14 +47,14 @@ type NSQD struct {
 
 	opts atomic.Value
 
-	dl        *dirlock.DirLock
+	dl        *dirlock.DirLock //锁目录
 	isLoading int32
 	errValue  atomic.Value
 	startTime time.Time
 
 	topicMap map[string]*Topic
 
-	lookupPeers atomic.Value
+	lookupPeers atomic.Value //查找同类
 
 	tcpListener   net.Listener
 	httpListener  net.Listener
@@ -75,22 +75,22 @@ func New(opts *Options) *NSQD {
 	dataPath := opts.DataPath
 	if opts.DataPath == "" {
 		cwd, _ := os.Getwd()
-		dataPath = cwd
+		dataPath = cwd // opts.DataPath 给一个默认地址
 	}
 	if opts.Logger == nil {
-		opts.Logger = log.New(os.Stderr, opts.LogPrefix, log.Ldate|log.Ltime|log.Lmicroseconds)
+		opts.Logger = log.New(os.Stderr, opts.LogPrefix, log.Ldate|log.Ltime|log.Lmicroseconds) //日志
 	}
 
-	n := &NSQD{
+	n := &NSQD{//引用指针? 但是结构体不是指针类型
 		startTime:            time.Now(),
-		topicMap:             make(map[string]*Topic),
+		topicMap:             make(map[string]*Topic), //声明指针topicMap
 		exitChan:             make(chan int),
 		notifyChan:           make(chan interface{}),
 		optsNotificationChan: make(chan struct{}, 1),
 		dl:                   dirlock.New(dataPath),
 	}
-	httpcli := http_api.NewClient(nil, opts.HTTPClientConnectTimeout, opts.HTTPClientRequestTimeout)
-	n.ci = clusterinfo.New(n.logf, httpcli)
+	httpcli := http_api.NewClient(nil, opts.HTTPClientConnectTimeout, opts.HTTPClientRequestTimeout) //启动 http 服务
+	n.ci = clusterinfo.New(n.logf, httpcli) //启动 cluster 服务
 
 	n.swapOpts(opts)
 	n.errValue.Store(errStore{})
@@ -102,7 +102,7 @@ func New(opts *Options) *NSQD {
 		os.Exit(1)
 	}
 
-	err = n.dl.Lock()
+	err = n.dl.Lock() //创建独占非阻塞文件锁
 	if err != nil {
 		n.logf(LOG_FATAL, "--data-path=%s in use (possibly by another instance of nsqd)", dataPath)
 		os.Exit(1)
@@ -117,10 +117,10 @@ func New(opts *Options) *NSQD {
 		n.logf(LOG_FATAL, "--node-id must be [0,1024)")
 		os.Exit(1)
 	}
-
+	//设置相关 监控
 	if opts.StatsdPrefix != "" {
 		var port string
-		_, port, err = net.SplitHostPort(opts.HTTPAddress)
+		_, port, err = net.SplitHostPort(opts.HTTPAddress) //分离 host ,port
 		if err != nil {
 			n.logf(LOG_FATAL, "failed to parse HTTP address (%s) - %s", opts.HTTPAddress, err)
 			os.Exit(1)

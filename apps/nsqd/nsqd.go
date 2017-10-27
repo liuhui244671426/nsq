@@ -223,7 +223,7 @@ func (p *program) Start() error {
 	cfg.Validate()
 
 	options.Resolve(opts, flagSet, cfg) //解析所有配置
-	nsqd := nsqd.New(opts)
+	nsqd := nsqd.New(opts) //初始化 nsqd
 
 	err := nsqd.LoadMetadata()
 	if err != nil {
