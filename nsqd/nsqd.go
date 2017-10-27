@@ -314,15 +314,15 @@ func (n *NSQD) LoadMetadata() error {
 	atomic.StoreInt32(&n.isLoading, 1)
 	defer atomic.StoreInt32(&n.isLoading, 0)
 
-	fn := newMetadataFile(n.getOpts())
+	fn := newMetadataFile(n.getOpts()) //加载新 nsqd.dat
 	// old metadata filename with ID, maintained in parallel to enable roll-back
-	fnID := oldMetadataFile(n.getOpts())
+	fnID := oldMetadataFile(n.getOpts()) //加载旧 nsqd.dat
 
-	data, err := readOrEmpty(fn)
+	data, err := readOrEmpty(fn) //读取 dat 数据
 	if err != nil {
 		return err
 	}
-	dataID, errID := readOrEmpty(fnID)
+	dataID, errID := readOrEmpty(fnID) //读取 dat 数据
 	if errID != nil {
 		return errID
 	}
@@ -330,6 +330,7 @@ func (n *NSQD) LoadMetadata() error {
 	if data == nil && dataID == nil {
 		return nil // fresh start
 	}
+	//旧dat 必须和新dat 文件内容相同
 	if data != nil && dataID != nil {
 		if bytes.Compare(data, dataID) != 0 {
 			return fmt.Errorf("metadata in %s and %s do not match (delete one)", fn, fnID)
@@ -340,7 +341,7 @@ func (n *NSQD) LoadMetadata() error {
 		fn = fnID
 		data = dataID
 	}
-
+	//解析 dat 内容
 	var m meta
 	err = json.Unmarshal(data, &m)
 	if err != nil {
@@ -350,9 +351,9 @@ func (n *NSQD) LoadMetadata() error {
 	for _, t := range m.Topics {
 		if !protocol.IsValidTopicName(t.Name) {
 			n.logf(LOG_WARN, "skipping creation of invalid topic %s", t.Name)
-			continue
+			continue // 删除不合法的 topic
 		}
-		topic := n.GetTopic(t.Name)
+		topic := n.GetTopic(t.Name) //获取 topic 信息
 		if t.Paused {
 			topic.Pause()
 		}
@@ -490,18 +491,18 @@ func (n *NSQD) Exit() {
 // to return a pointer to a Topic object (potentially new)
 func (n *NSQD) GetTopic(topicName string) *Topic {
 	// most likely, we already have this topic, so try read lock first.
-	n.RLock()
+	n.RLock() //读锁定
 	t, ok := n.topicMap[topicName]
-	n.RUnlock()
+	n.RUnlock() //读解锁
 	if ok {
 		return t
 	}
 
-	n.Lock()
+	n.Lock() //写锁定
 
 	t, ok = n.topicMap[topicName]
 	if ok {
-		n.Unlock()
+		n.Unlock() //写解锁
 		return t
 	}
 	deleteCallback := func(t *Topic) {
@@ -526,7 +527,7 @@ func (n *NSQD) GetTopic(topicName string) *Topic {
 			n.logf(LOG_WARN, "failed to query nsqlookupd for channels to pre-create for topic %s - %s", t.name, err)
 		}
 		for _, channelName := range channelNames {
-			if strings.HasSuffix(channelName, "#ephemeral") {
+			if strings.HasSuffix(channelName, "#ephemeral") { //如果 channel 后缀是 ephemeral(adj.短暂的),则跳过
 				// we don't want to pre-create ephemeral channels
 				// because there isn't a client connected
 				continue
@@ -545,6 +546,8 @@ func (n *NSQD) GetTopic(topicName string) *Topic {
 	// from lookupd...
 	//
 	// update messagePump state
+
+	//下面这段不明白 todo
 	select {
 	case t.channelUpdateChan <- 1:
 	case <-t.exitChan:
