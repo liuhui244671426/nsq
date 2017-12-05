@@ -1,3 +1,4 @@
+//提供最终一致性的发现服务
 package nsqlookupd
 
 import (
@@ -15,11 +16,11 @@ import (
 
 type NSQLookupd struct {
 	sync.RWMutex
-	opts         *Options
-	tcpListener  net.Listener
-	httpListener net.Listener
-	waitGroup    util.WaitGroupWrapper
-	DB           *RegistrationDB
+	opts         *Options //设置
+	tcpListener  net.Listener //tcp 监听
+	httpListener net.Listener //http 监听
+	waitGroup    util.WaitGroupWrapper //封装的waitGroup
+	DB           *RegistrationDB //注册 DB
 }
 
 func New(opts *Options) *NSQLookupd {
@@ -43,9 +44,9 @@ func New(opts *Options) *NSQLookupd {
 }
 
 func (l *NSQLookupd) Main() {
-	ctx := &Context{l}
+	ctx := &Context{l} //将NSQLookupd结构体合并进Context
 
-	tcpListener, err := net.Listen("tcp", l.opts.TCPAddress)
+	tcpListener, err := net.Listen("tcp", l.opts.TCPAddress) //监听 tcp
 	if err != nil {
 		l.logf(LOG_FATAL, "listen (%s) failed - %s", l.opts.TCPAddress, err)
 		os.Exit(1)
@@ -58,7 +59,7 @@ func (l *NSQLookupd) Main() {
 		protocol.TCPServer(tcpListener, tcpServer, l.logf)
 	})
 
-	httpListener, err := net.Listen("tcp", l.opts.HTTPAddress)
+	httpListener, err := net.Listen("tcp", l.opts.HTTPAddress) // 监听 http
 	if err != nil {
 		l.logf(LOG_FATAL, "listen (%s) failed - %s", l.opts.HTTPAddress, err)
 		os.Exit(1)
