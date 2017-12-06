@@ -10,7 +10,7 @@ import (
 type tcpServer struct {
 	ctx *context
 }
-
+//优雅升级协议,远离 text/cmd
 func (p *tcpServer) Handle(clientConn net.Conn) {
 	p.ctx.nsqd.logf(LOG_INFO, "TCP: new client(%s)", clientConn.RemoteAddr())
 
