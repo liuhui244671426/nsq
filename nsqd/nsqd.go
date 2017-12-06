@@ -211,7 +211,7 @@ func (n *NSQD) GetHealth() string {
 func (n *NSQD) GetStartTime() time.Time {
 	return n.startTime
 }
-
+//主函数
 func (n *NSQD) Main() {
 	var httpListener net.Listener
 	var httpsListener net.Listener
@@ -260,10 +260,10 @@ func (n *NSQD) Main() {
 		http_api.Serve(n.httpListener, httpServer, "HTTP", n.logf)
 	})
 
-	n.waitGroup.Wrap(func() { n.queueScanLoop() })
-	n.waitGroup.Wrap(func() { n.lookupLoop() })
+	n.waitGroup.Wrap(func() { n.queueScanLoop() }) //启动 循环的队列扫描
+	n.waitGroup.Wrap(func() { n.lookupLoop() }) //启动 循环的检测
 	if n.getOpts().StatsdAddress != "" {
-		n.waitGroup.Wrap(func() { n.statsdLoop() })
+		n.waitGroup.Wrap(func() { n.statsdLoop() }) //启动 循环状态检测
 	}
 }
 
