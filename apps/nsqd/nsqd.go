@@ -1,6 +1,7 @@
 //终于搭建好了编译环境,解决了各种依赖关系
 //
 // 2017.10.19
+// 先从这个文件开始编译
 package main
 
 import (
@@ -75,7 +76,7 @@ func (t *tlsMinVersionOption) Get() interface{} { return uint16(*t) }
 func (t *tlsMinVersionOption) String() string {
 	return strconv.FormatInt(int64(*t), 10)
 }
-
+//nsqd 服务,可配置的参数
 func nsqdFlagSet(opts *nsqd.Options) *flag.FlagSet {
 	flagSet := flag.NewFlagSet("nsqd", flag.ExitOnError)
 
@@ -149,7 +150,7 @@ func nsqdFlagSet(opts *nsqd.Options) *flag.FlagSet {
 
 	return flagSet
 }
-
+//定义 config 类型 是 [string=>interface]
 type config map[string]interface{}
 
 // Validate settings in the config file, and fatal on errors
@@ -186,11 +187,13 @@ type program struct {
 
 func main() {
 	prg := &program{} //引用 program 结构体
+	//启动nsqd服务
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {
 		log.Fatal(err)
 	}
+	//Run 实际依次启动本文件的 Init(),Start(),channel通信,Stop() 为什么写这么深,现在还不知道
 }
-
+//初始化服务
 func (p *program) Init(env svc.Environment) error {
 	if env.IsWindowsService() {
 		dir := filepath.Dir(os.Args[0])
@@ -198,21 +201,23 @@ func (p *program) Init(env svc.Environment) error {
 	}
 	return nil
 }
-
+// 开始服务
 func (p *program) Start() error {
-	opts := nsqd.NewOptions()
+	opts := nsqd.NewOptions() //获取 命令行设置项
 
 	flagSet := nsqdFlagSet(opts)
 	flagSet.Parse(os.Args[1:])
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	//带有 version 就是查看版本号,不启动服务
 	if flagSet.Lookup("version").Value.(flag.Getter).Get().(bool) { //这是什么鬼语法...
-		fmt.Println(version.String("nsqd"))
+		fmt.Println(version.String("nsqd")) //获取版本
 		os.Exit(0)
 	}
 
-	var cfg config
+	var cfg config //config 文件
+	//检查是否有 config 文件,有则加载
 	configFile := flagSet.Lookup("config").Value.String()
 	if configFile != "" {
 		_, err := toml.DecodeFile(configFile, &cfg)
@@ -222,7 +227,7 @@ func (p *program) Start() error {
 	}
 	cfg.Validate()
 
-	options.Resolve(opts, flagSet, cfg) //解析所有配置
+	options.Resolve(opts, flagSet, cfg) //解析 所有配置 到 opts 里
 	nsqd := nsqd.New(opts) //初始化 nsqd
 
 	err := nsqd.LoadMetadata()
