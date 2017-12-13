@@ -309,7 +309,7 @@ func writeSyncFile(fn string, data []byte) error {
 	f.Close()
 	return err
 }
-
+// 加载 元数据
 func (n *NSQD) LoadMetadata() error {
 	atomic.StoreInt32(&n.isLoading, 1)
 	defer atomic.StoreInt32(&n.isLoading, 0)
