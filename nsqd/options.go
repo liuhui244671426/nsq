@@ -89,7 +89,7 @@ func NewOptions() *Options {
 
 	h := md5.New()
 	io.WriteString(h, hostname)
-	defaultID := int64(crc32.ChecksumIEEE(h.Sum(nil)) % 1024)
+	defaultID := int64(crc32.ChecksumIEEE(h.Sum(nil)) % 1024) //生成默认 ID
 
 	return &Options{
 		ID:        defaultID,
