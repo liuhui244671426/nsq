@@ -19,11 +19,14 @@ type httpServer struct {
 
 func newHTTPServer(ctx *Context) *httpServer {
 	log := http_api.Log(ctx.nsqlookupd.logf)
-
+	//实例化一个httprouter
 	router := httprouter.New()
 	router.HandleMethodNotAllowed = true
+	//设置panic时的处理函数
 	router.PanicHandler = http_api.LogPanicHandler(ctx.nsqlookupd.logf)
+	//设置not found处理函数
 	router.NotFound = http_api.LogNotFoundHandler(ctx.nsqlookupd.logf)
+	//当请求方法不支持时的处理函数
 	router.MethodNotAllowed = http_api.LogMethodNotAllowedHandler(ctx.nsqlookupd.logf)
 	s := &httpServer{
 		ctx:    ctx,

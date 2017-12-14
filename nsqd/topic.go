@@ -193,10 +193,10 @@ func (t *Topic) PutMessages(msgs []*Message) error {
 	atomic.AddUint64(&t.messageCount, uint64(len(msgs)))
 	return nil
 }
-
+//优先把消息投递给内存channel（t.memoryMsgChan），当内存channel满了之后，则把消息append到磁盘文件中
 func (t *Topic) put(m *Message) error {
 	select {
-	case t.memoryMsgChan <- m:
+	case t.memoryMsgChan <- m: //t.memoryMsgChan默认长度10000,或通过 mem-queue-size 修改
 	default:
 		b := bufferPoolGet()
 		err := writeMessageToBackend(b, m, t.backend)
@@ -239,6 +239,7 @@ func (t *Topic) messagePump() {
 
 	for {
 		select {
+		//获取消息
 		case msg = <-memoryMsgChan:
 		case buf = <-backendChan:
 			msg, err = decodeMessage(buf)
@@ -273,7 +274,7 @@ func (t *Topic) messagePump() {
 		case <-t.exitChan:
 			goto exit
 		}
-
+		//复制每个消息，并且分发给每个channel
 		for i, channel := range chans {
 			chanMsg := msg
 			// copy the message because each channel

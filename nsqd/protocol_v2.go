@@ -761,13 +761,13 @@ func (p *protocolV2) PUB(client *clientV2, params [][]byte) ([]byte, error) {
 	if len(params) < 2 {
 		return nil, protocol.NewFatalClientErr(nil, "E_INVALID", "PUB insufficient number of parameters")
 	}
-
+	//读取topic名称，即第二个参数
 	topicName := string(params[1])
 	if !protocol.IsValidTopicName(topicName) {
 		return nil, protocol.NewFatalClientErr(nil, "E_BAD_TOPIC",
 			fmt.Sprintf("PUB topic name %q is not valid", topicName))
 	}
-
+	//读取消息体的长度
 	bodyLen, err := readLen(client.Reader, client.lenSlice)
 	if err != nil {
 		return nil, protocol.NewFatalClientErr(err, "E_BAD_MESSAGE", "PUB failed to read message body size")
@@ -782,7 +782,7 @@ func (p *protocolV2) PUB(client *clientV2, params [][]byte) ([]byte, error) {
 		return nil, protocol.NewFatalClientErr(nil, "E_BAD_MESSAGE",
 			fmt.Sprintf("PUB message too big %d > %d", bodyLen, p.ctx.nsqd.getOpts().MaxMsgSize))
 	}
-
+	//读取消息体
 	messageBody := make([]byte, bodyLen)
 	_, err = io.ReadFull(client.Reader, messageBody)
 	if err != nil {
@@ -792,9 +792,11 @@ func (p *protocolV2) PUB(client *clientV2, params [][]byte) ([]byte, error) {
 	if err := p.CheckAuth(client, "PUB", topicName, ""); err != nil {
 		return nil, err
 	}
-
+	//获取topic实例
 	topic := p.ctx.nsqd.GetTopic(topicName)
+	//将消息体封装成message实例
 	msg := NewMessage(topic.GenerateID(), messageBody)
+	//向目标topic投递消息
 	err = topic.PutMessage(msg)
 	if err != nil {
 		return nil, protocol.NewFatalClientErr(err, "E_PUB_FAILED", "PUB failed "+err.Error())
