@@ -14,6 +14,7 @@ import (
 	"github.com/nsqio/nsq/internal/version"
 	"github.com/nsqio/nsq/nsqlookupd"
 )
+//实现了 go-svc/svc 的所有方法
 
 func nsqlookupdFlagSet(opts *nsqlookupd.Options) *flag.FlagSet {
 	flagSet := flag.NewFlagSet("nsqlookupd", flag.ExitOnError)
