@@ -295,7 +295,7 @@ func readOrEmpty(fn string) ([]byte, error) {
 	}
 	return data, nil
 }
-
+//数据落到文件
 func writeSyncFile(fn string, data []byte) error {
 	f, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
@@ -417,7 +417,7 @@ func (n *NSQD) PersistMetadata() error {
 
 	tmpFileName := fmt.Sprintf("%s.%d.tmp", fileName, rand.Int())
 
-	err = writeSyncFile(tmpFileName, data)
+	err = writeSyncFile(tmpFileName, data) //写入文件
 	if err != nil {
 		return err
 	}
