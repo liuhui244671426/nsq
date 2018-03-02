@@ -101,7 +101,7 @@ func RespondV1(w http.ResponseWriter, code int, data interface{}) {
 	w.WriteHeader(code)
 	w.Write(response)
 }
-
+//装饰器?
 func Decorate(f APIHandler, ds ...Decorator) httprouter.Handle {
 	decorated := f
 	for _, decorate := range ds {
@@ -116,14 +116,14 @@ func Log(logf lg.AppLogFunc) Decorator {
 	return func(f APIHandler) APIHandler {
 		return func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) (interface{}, error) {
 			start := time.Now()
-			response, err := f(w, req, ps)
-			elapsed := time.Since(start)
-			status := 200
+			response, err := f(w, req, ps) //执行http请求
+			elapsed := time.Since(start) //调用时长
+			status := 200 //状态码
 			if e, ok := err.(Err); ok {
 				status = e.Code
 			}
 			logf(lg.INFO, "%d %s %s (%s) %s",
-				status, req.Method, req.URL.RequestURI(), req.RemoteAddr, elapsed)
+				status, req.Method, req.URL.RequestURI(), req.RemoteAddr, elapsed) //输出http处理日志信息
 			return response, err
 		}
 	}

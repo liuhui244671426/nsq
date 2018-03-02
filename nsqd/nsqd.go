@@ -261,7 +261,7 @@ func (n *NSQD) Main() {
 	})
 
 	n.waitGroup.Wrap(func() { n.queueScanLoop() }) //启动 循环的队列扫描
-	n.waitGroup.Wrap(func() { n.lookupLoop() }) //启动 循环的检测
+	n.waitGroup.Wrap(func() { n.lookupLoop() }) //同步 nsqd 状态到nsqlookup比如：在线、Topic变化、Channel变化等
 	if n.getOpts().StatsdAddress != "" {
 		n.waitGroup.Wrap(func() { n.statsdLoop() }) //启动 循环状态检测
 	}

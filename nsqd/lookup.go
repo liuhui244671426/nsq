@@ -81,6 +81,7 @@ func (n *NSQD) lookupLoop() {
 		}
 
 		select {
+		//发送心跳  告诉 nsqlookup 自己在线
 		case <-ticker:
 			// send a heartbeat and read a response (read detects closed conns)
 			for _, lookupPeer := range lookupPeers {
