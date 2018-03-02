@@ -187,11 +187,12 @@ type program struct {
 
 func main() {
 	prg := &program{} //引用 program 结构体
-	//启动nsqd服务
+	//钩住系统的syscall.SIGINT和syscall.SIGTERM消息，用来阻塞主goroutine防止退出
+	//主goroutine会阻塞在<-signalChan处，直到收到中断程序的信号，随后执行nsqd.Exit函数
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {
 		log.Fatal(err)
 	}
-	//Run 实际依次启动本文件的 Init(),Start(),channel通信,Stop() 为什么写这么深,现在还不知道
+	//Run 实际依次启动本文件的 Init(),Start(),channel通信,Stop()
 }
 //初始化服务
 func (p *program) Init(env svc.Environment) error {

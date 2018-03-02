@@ -70,7 +70,7 @@ type NSQD struct {
 
 	ci *clusterinfo.ClusterInfo
 }
-
+//初始化,收集信息
 func New(opts *Options) *NSQD {
 	dataPath := opts.DataPath
 	if opts.DataPath == "" {
@@ -211,7 +211,7 @@ func (n *NSQD) GetHealth() string {
 func (n *NSQD) GetStartTime() time.Time {
 	return n.startTime
 }
-//主函数
+//主函数, 在运行此函数前,已经运行LoadMetadata,PersistMetadata
 func (n *NSQD) Main() {
 	var httpListener net.Listener
 	var httpsListener net.Listener
@@ -311,6 +311,7 @@ func writeSyncFile(fn string, data []byte) error {
 }
 // 加载 元数据
 func (n *NSQD) LoadMetadata() error {
+	//保证方法执行前和执行后 isLoading 值的改变
 	atomic.StoreInt32(&n.isLoading, 1)
 	defer atomic.StoreInt32(&n.isLoading, 0)
 
@@ -347,13 +348,14 @@ func (n *NSQD) LoadMetadata() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse metadata in %s - %s", fn, err)
 	}
-
+	//topic.channel
 	for _, t := range m.Topics {
 		if !protocol.IsValidTopicName(t.Name) {
 			n.logf(LOG_WARN, "skipping creation of invalid topic %s", t.Name)
 			continue // 删除不合法的 topic
 		}
 		topic := n.GetTopic(t.Name) //获取 topic 信息
+		//判断当前 topic 对象是否处于暂停状态，是的话调用 Pause 函数暂停 topic
 		if t.Paused {
 			topic.Pause()
 		}
@@ -371,7 +373,7 @@ func (n *NSQD) LoadMetadata() error {
 	}
 	return nil
 }
-
+//将当前的 topic 和 channel 信息写入文件
 func (n *NSQD) PersistMetadata() error {
 	// persist metadata about what topics/channels we have, across restarts
 	fileName := newMetadataFile(n.getOpts())
@@ -459,6 +461,7 @@ func (n *NSQD) PersistMetadata() error {
 
 func (n *NSQD) Exit() {
 	if n.tcpListener != nil {
+		//关闭 tcp
 		n.tcpListener.Close()
 	}
 
@@ -471,18 +474,18 @@ func (n *NSQD) Exit() {
 	}
 
 	n.Lock()
-	err := n.PersistMetadata()
+	err := n.PersistMetadata() //保存内存的数据
 	if err != nil {
 		n.logf(LOG_ERROR, "failed to persist metadata - %s", err)
 	}
 	n.logf(LOG_INFO, "NSQ: closing topics")
 	for _, topic := range n.topicMap {
-		topic.Close()
+		topic.Close() //关闭 topic
 	}
 	n.Unlock()
 
 	close(n.exitChan)
-	n.waitGroup.Wait()
+	n.waitGroup.Wait() //Wait()这里会发生阻塞，直到队列中所有的任务结束就会解除阻塞
 
 	n.dl.Unlock()
 }
