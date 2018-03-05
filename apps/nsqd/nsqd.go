@@ -186,7 +186,7 @@ type program struct {
 }
 
 func main() {
-	prg := &program{} //引用 program 结构体
+	prg := &program{} //引用 NSQD 结构体
 	//钩住系统的syscall.SIGINT和syscall.SIGTERM消息，用来阻塞主goroutine防止退出
 	//主goroutine会阻塞在<-signalChan处，直到收到中断程序的信号，随后执行nsqd.Exit函数
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {
