@@ -61,8 +61,9 @@ func init() {
 }
 
 func main() {
+	//解析参数
 	flagSet.Parse(os.Args[1:])
-
+	//打印版本信息
 	if *showVersion {
 		fmt.Println(version.String("nsqadmin"))
 		return
@@ -75,9 +76,9 @@ func main() {
 		exitChan <- 1
 	}()
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
+	//配置map
 	var cfg map[string]interface{}
-	if *config != "" {
+	if *config != "" { //有配置文件,则解析配置文件
 		_, err := toml.DecodeFile(*config, &cfg)
 		if err != nil {
 			log.Fatalf("ERROR: failed to load config file %s - %s", *config, err)
